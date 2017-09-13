@@ -19,8 +19,8 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin {
      */
     public function register(Doku_Event_Handler $controller) {
 
-       $controller->register_hook('AJAX_CALL_UNKNOWN', 'FIXME', $this, 'handle_ajax_call_unknown');
-   
+       $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax_call_unknown');
+
     }
 
     /**
@@ -32,7 +32,8 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin {
      * @return void
      */
 
-    public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
+    public function handle_ajax_call_unknown(Doku_Event $event, $param) {
+
     }
 
 }
