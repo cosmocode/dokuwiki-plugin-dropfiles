@@ -1,0 +1,5 @@
+/* @flow */
+
+jQuery(function () {
+
+});
