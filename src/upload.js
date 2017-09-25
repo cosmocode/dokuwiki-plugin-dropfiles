@@ -42,7 +42,7 @@ jQuery(function () {
             var form = new FormData();
 
             form.append('qqfile', file, file.name);
-            form.append('call', 'mediaupload');
+            form.append('call', 'dropfiles_mediaupload');
             form.append('sectok', sectok);
             form.append('ns', window.JSINFO.namespace);
 
@@ -57,6 +57,10 @@ jQuery(function () {
             jQuery.ajax(window.DOKU_BASE + 'lib/exe/ajax.php', settings)
                 .done(
                     function (data, textStatus, jqXHR) {
+                        if (data.success) {
+                            // upload successful, use data.link and data.id
+                            return;
+                        }
                         console.log('Class: , Function: done-callback, Line 54 {data, textStatus, jqXHR}(): '
                             , { data: data, textStatus: textStatus, jqXHR: jqXHR });
                     }
