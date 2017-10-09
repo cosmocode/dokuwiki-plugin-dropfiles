@@ -14,6 +14,9 @@ if (!defined('DOKU_INC')) {
 class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
 {
 
+    protected $NS = '';
+
+
     /**
      * Registers a callback function for a given event
      *
@@ -38,13 +41,22 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
 
     public function handleAjaxCallUnknown(Doku_Event $event, $param)
     {
-        if ($event->data !== 'dropfiles_mediaupload') {
+        if (strpos($event->data,'dropfiles') !== 0) {
             return;
         }
+
         $event->preventDefault();
         $event->stopPropagation();
+        $action = substr($event->data, strlen('dropfiles_'));
 
-        $this->callMediaupload();
+        if ($action === 'checkfiles') {
+            echo json_encode($this->checkFiles());
+        }
+
+        if ($action === 'mediaupload') {
+            global $INPUT;
+            $this->callMediaupload();
+        }
     }
 
     /**
@@ -101,7 +113,7 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
             }
             $result = array(
                 'error' => $error,
-                'errorType' => $this->determineErrorCause($id, $ns, $AUTH),
+                'errorType' => $this->determineErrorCause($id, $ns),
                 'ns' => $NS,
             );
         }
@@ -109,25 +121,56 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
         echo json_encode($result);
     }
 
+
+    /**
+     * @return array
+     */
+    protected function checkFiles() {
+        global $INPUT;
+        $this->NS = $INPUT->str('ns');
+
+        // loop over files
+        $filelist = $INPUT->post->arr('filenames');
+        return array_reduce($filelist, [$this, 'checkFileCallback'], []);
+    }
+
+    /**
+     * check a list of filenames for existing files and other errors that might prevent upload
+     *
+     * Note: some checks can only be done after the file has actually been uploaded
+     *
+     * @param array $carry
+     * @param string $filename
+     * @return array
+     */
+    protected function checkFileCallback($carry, $filename){
+        $id = cleanID($filename);
+        $ns = $this->NS . ':' . getNS($id);
+        $error = $this->determineErrorCause($id, $ns, false);
+        $carry[$filename] = $error;
+        return $carry;
+    }
+
+
     /**
      * Try to determine WHY the upload failed
      *
      * This replicates code from several places in dokuwiki core
      *
-     * @param $id
-     * @param $ns
-     * @param $AUTH
+     * @param string $id the name of the new file on the filesystem
+     * @param string $ns the namespace where the new file would have been saved
+     * @param bool $contentAvailable flag if the file hasn't been uploaded yet
      *
      * @return string
      */
-    protected function determineErrorCause($id, $ns, $AUTH)
+    protected function determineErrorCause($id, $ns, $contentAvailable = true)
     {
         global $conf;
 
         if (!checkSecurityToken()) {
             return 'security token failed';
         }
-
+        $AUTH = auth_quickaclcheck("$ns:*");
         if ($AUTH < AUTH_UPLOAD) {
             return 'missing permissions';
         }
@@ -156,16 +199,18 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
             return 'file exists';
         }
 
-        list(, $mime) = mimetype($id);
-        $ok = media_contentcheck($fn, $mime);
-        if ($ok === -1) {
-            return 'file does not match extension';
-        }
-        if ($ok === -2) {
-            return 'spam';
-        }
-        if ($ok === -3) {
-            return 'xss';
+        if ($contentAvailable) {
+            list(, $mime) = mimetype($id);
+            $ok = media_contentcheck($fn, $mime);
+            if ($ok === -1) {
+                return 'file does not match extension';
+            }
+            if ($ok === -2) {
+                return 'spam';
+            }
+            if ($ok === -3) {
+                return 'xss';
+            }
         }
 
         return '';

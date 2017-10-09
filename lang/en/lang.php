@@ -9,7 +9,13 @@
 // $lang['menu'] = 'Your menu entry';
 
 // custom language strings for the plugin
-// $lang['fixme'] = 'FIXME';
+$lang['js']['skip'] = 'Skip';
+$lang['js']['overwrite'] = 'Overwrite';
+$lang['js']['overwriteAll'] = 'Overwrite all';
+$lang['js']['rename'] = 'Rename';
+$lang['js']['cancel'] = 'Cancel';
+$lang['js']['popup:fileExists'] = 'The file %s already exists.';
+$lang['js']['popup:originalName'] = '(Original filename: %s)';
 
 
 
