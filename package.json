@@ -1,8 +1,8 @@
 {
   "name": "dropfiles",
   "keywords": [
-      "dokuwiki",
-      "dokuwiki-plugin"
+    "dokuwiki",
+    "dokuwiki-plugin"
   ],
   "version": "1.0.0",
   "description": "DokuWiki plugin to enable file upload by drag'n'drop into the page edit area",
@@ -13,34 +13,26 @@
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.0.0",
     "babel-loader": "^7.1.2",
-    "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-preset-env": "^1.6.0",
-    "babel-preset-flow": "^6.23.0",
     "eslint": "^4.6.1",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-compat": "^1.0.4",
-    "eslint-plugin-flowtype": "^2.35.1",
-    "flow-bin": "^0.54.1",
-    "flow-typed": "^2.1.5",
-    "flow-webpack-plugin": "^1.1.0",
-    "webpack": "^3.5.6",
-    "webpack-messages": "^1.0.1"
+    "webpack": "^3.5.6"
   },
   "scripts": {
-    "initialSetup": "validate-commit-msg",
     "dev": "webpack -d",
     "watch": "webpack -dw",
     "build": "webpack -p",
     "eslint": "NODE_ENV=production eslint src/"
   },
-    "browserslist": [
-        "> 1%",
-        "last 2 chrome versions",
-        "last 2 firefox versions",
-        "last 2 edge versions",
-        "last 2 safari versions",
-        "last 2 ChromeAndroid versions",
-        "last 2 ios versions",
-        "ie 11"
-    ]
+  "browserslist": [
+    "> 1%",
+    "last 2 chrome versions",
+    "last 2 firefox versions",
+    "last 2 edge versions",
+    "last 2 safari versions",
+    "last 2 ChromeAndroid versions",
+    "last 2 ios versions",
+    "ie 11"
+  ]
 }

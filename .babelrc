@@ -5,6 +5,5 @@
                 "browsers": ["ie 11"]
             }
         }]
-    ],
-    "plugins": ["transform-flow-strip-types"]
+    ]
 }

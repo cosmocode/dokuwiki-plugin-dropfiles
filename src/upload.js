@@ -244,7 +244,6 @@ jQuery(function () {
     }
 
     $editarea.on('drop', function (e) {
-        // $FlowFixMe
         if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
             return;
         }
@@ -252,7 +251,6 @@ jQuery(function () {
         e.preventDefault();
         e.stopPropagation();
 
-        // $FlowFixMe
         var files = e.originalEvent.dataTransfer.files;
 
         // todo Dateigrößen, Filetypes

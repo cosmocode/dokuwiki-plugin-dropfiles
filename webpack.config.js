@@ -1,7 +1,5 @@
 /* global process */
 const webpack = require('webpack');
-const WebpackMessages = require('webpack-messages');
-const FlowWebpackPlugin = require('flow-webpack-plugin');
 
 // fix for https://github.com/webpack/webpack/issues/2537
 if (process.argv.indexOf('-p') !== -1) {
@@ -29,10 +27,5 @@ module.exports = {
     },
     plugins: [
         new webpack.NoEmitOnErrorsPlugin(),
-        new WebpackMessages({
-            name: 'client',
-            logger: str => console.log(`>> ${str}`),
-        }),
-        new FlowWebpackPlugin(),
     ],
 };

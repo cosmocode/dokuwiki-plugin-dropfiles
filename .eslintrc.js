@@ -77,11 +77,9 @@ module.exports = {
     },
     'plugins': [
         'compat',
-        'flowtype',
     ],
     'extends': [
         'eslint:recommended',
-        'plugin:flowtype/recommended',
     ],
     rules
 };
