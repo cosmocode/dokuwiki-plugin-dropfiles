@@ -6,7 +6,7 @@
  */
 
 // keys need to match the config setting name
- $lang['insertFileLink'] = 'Insert link to successfully uploaded files at cursor position in page';
+ $lang['insertFileLink'] = 'Link zu erfolgreich hochgeladenen Dateien an Cursor-Position in Seite einfügen';
 
 
 

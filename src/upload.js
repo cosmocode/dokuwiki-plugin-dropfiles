@@ -1,4 +1,5 @@
 jQuery(function () {
+    'use strict';
     var $editarea = jQuery('#wiki__text');
     if (!$editarea.length) {
         return;
@@ -165,6 +166,21 @@ jQuery(function () {
     jQuery('body').append($widget);
 
     /**
+     * Insert the syntax to the uploaded file into the page
+     *
+     * @param {string} fileid the id of the uploaded file as returned by DokuWiki
+     *
+     * @return {void}
+     */
+    function insertSyntax(fileid) {
+        var syntax = '{{' + fileid + '}}';
+        var caretPos = $editarea[0].selectionStart;
+        var prefix = $editarea.text().substring(0, caretPos);
+        var postfix = $editarea.text().substring(caretPos);
+        $editarea.text(prefix + syntax + postfix);
+    }
+
+    /**
      *
      * @param {File[]} filelist List of the files to be uploaded
      * @param {boolean} [overwrite] should the files be overwritten at the server?
@@ -173,6 +189,7 @@ jQuery(function () {
      */
     function uploadFiles(filelist, overwrite) {
         if (typeof overwrite === 'undefined') {
+            // noinspection AssignmentToFunctionParameterJS
             overwrite = 0;
         }
         $widget.show().dialog({
@@ -215,6 +232,9 @@ jQuery(function () {
                         if (data.success) {
                             $progressBar.find('.ui-progressbar-value').css('background-color', 'green');
                             $statusbar.find('.filename').wrap(jQuery('<a>').attr({'href': data.link, 'target':'_blank'}));
+                            if (window.JSINFO.plugins.dropfiles.insertFileLink) {
+                                insertSyntax(data.id);
+                            }
                             return;
                         }
                         if (data.errorType === 'file exists') {
