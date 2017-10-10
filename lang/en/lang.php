@@ -16,6 +16,8 @@ $lang['js']['rename'] = 'Rename';
 $lang['js']['cancel'] = 'Cancel';
 $lang['js']['popup:fileExists'] = 'The file %s already exists.';
 $lang['js']['popup:originalName'] = '(Original filename: %s)';
+$lang['js']['title:fileUpload'] = 'File upload';
+$lang['js']['title:fileExistsError'] = 'Error: File exists';
 
 
 

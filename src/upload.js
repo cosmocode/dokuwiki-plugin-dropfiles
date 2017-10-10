@@ -13,7 +13,7 @@ jQuery(function () {
      */
     function createXHRudateProgressBar($progressBar) {
         var xhr = jQuery.ajaxSettings.xhr();
-        xhr.upload.onprogress = function(ev) {
+        xhr.upload.onprogress = function (ev) {
             if (ev.lengthComputable) {
                 var percentComplete = ev.loaded / ev.total;
                 $progressBar.progressbar('option', {value: percentComplete});
@@ -24,7 +24,6 @@ jQuery(function () {
 
     var $errorDialog = null;
     var filesThatExist = [];
-
 
 
     /**
@@ -75,7 +74,7 @@ jQuery(function () {
         $newInput.append(jQuery('<button name="rename" type="submit">' + window.LANG.plugins.dropfiles.rename + '</button>'));
         $newInput.append(jQuery('<button name="cancel">' + window.LANG.plugins.dropfiles.cancel + '</button>'));
         $newInput.find('button').button();
-        $newInput.on('submit', function () {
+        $newInput.on('submit', function (event) {
             event.preventDefault();
             $errorDialog.remove();
             var fileToBeUploaded = filesThatExist.shift();
@@ -84,6 +83,11 @@ jQuery(function () {
             if (filesThatExist.length) {
                 showErrorDialog();
             }
+        });
+        $newInput.find('button[name="cancel"]').click(function (event) {
+            event.preventDefault();
+            $errorDialog.remove();
+            showErrorDialog();
         });
         $errorDialog.parent().find('.ui-dialog-buttonset').html($newInput);
     }
@@ -95,31 +99,42 @@ jQuery(function () {
      */
     function showErrorDialog() {
         var fileName = filesThatExist[0].newFileName || filesThatExist[0].name;
-        var text = window.LANG.plugins.dropfiles['popup:fileExists'].replace('%s',fileName);
+        var text = window.LANG.plugins.dropfiles['popup:fileExists'].replace('%s', fileName);
         if (fileName !== filesThatExist[0].name) {
             text += ' ' + window.LANG.plugins.dropfiles['popup:originalName'].replace('%s', filesThatExist[0].name);
         }
-        $errorDialog = jQuery('<div></div>').text(text).appendTo(jQuery('body'));
+        var errorTitle = window.LANG.plugins.dropfiles['title:fileExistsError'];
+        $errorDialog = jQuery('<div id="dropfiles_error_dialog" title="' + errorTitle + '"></div>').text(text).appendTo(jQuery('body'));
         jQuery($errorDialog).dialog({
+            width: 510,
             buttons: [
                 {
                     text: window.LANG.plugins.dropfiles.skip,
-                    click: function() {skipFile()}
+                    click: function () {
+                        skipFile()
+                    }
                 },
                 {
                     text: window.LANG.plugins.dropfiles.overwrite,
-                    click: function() {overwriteFile()}
+                    click: function () {
+                        overwriteFile()
+                    }
                 },
                 {
                     text: window.LANG.plugins.dropfiles.overwriteAll,
-                    click: function() {overwriteAll()}
+                    click: function () {
+                        overwriteAll()
+                    }
                 },
                 {
                     text: window.LANG.plugins.dropfiles.rename,
-                    click: function() {renameFile()}
+                    click: function () {
+                        renameFile()
+                    }
                 }
             ]
         }).draggable();
+        jQuery($errorDialog).dialog('widget').addClass('dropfiles');
 
     }
 
@@ -145,8 +160,8 @@ jQuery(function () {
 
     var sectok = $editarea.closest('form').find('input[name="sectok"]').val();
     var DW_AJAX_URL = window.DOKU_BASE + 'lib/exe/ajax.php';
-
-    var $widget = jQuery('<div id="plugin_dropfiles_uploadwidget"></div>').hide();
+    var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
+    var $widget = jQuery('<div title="' + widgetTitle + '" id="plugin_dropfiles_uploadwidget"></div>').hide();
     jQuery('body').append($widget);
 
     /**
@@ -163,6 +178,7 @@ jQuery(function () {
         $widget.show().dialog({
             width: 600
         });
+        jQuery($widget).dialog('widget').addClass('dropfiles');
         filelist.forEach(function (file) {
             var fileName = file.newFileName || file.name;
 
@@ -171,6 +187,9 @@ jQuery(function () {
             var $progressBar = jQuery('<div class="progressbar">').progressbar({max: 1});
             $statusbar.append($progressBar);
             $widget.append($statusbar);
+            if (!$widget.dialog('isOpen')) {
+                $widget.dialog('open');
+            }
 
             var form = new FormData();
             form.append('qqfile', file, fileName);
@@ -194,18 +213,25 @@ jQuery(function () {
                 .done(
                     function (data) {
                         if (data.success) {
-                            // upload successful, use data.link and data.id
+                            $progressBar.find('.ui-progressbar-value').css('background-color', 'green');
+                            $statusbar.find('.filename').wrap(jQuery('<a>').attr({'href': data.link, 'target':'_blank'}));
                             return;
                         }
                         if (data.errorType === 'file exists') {
+                            $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
                             filesThatExist.push(file);
                             if (filesThatExist.length === 1) {
                                 showErrorDialog();
                             }
+                            var $fileExistsErrorMessage = jQuery('<div class="error"></div>');
+                            $fileExistsErrorMessage.text(fileName + ': ' + data.error);
+                            $fileExistsErrorMessage.insertAfter($statusbar);
+                            return;
                         }
+                        $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
                         var $errorMessage = jQuery('<div class="error"></div>');
                         $errorMessage.text(fileName + ': ' + data.error);
-                        jQuery('.content').prepend($errorMessage);
+                        $errorMessage.insertAfter($statusbar);
                     }
                 )
                 .fail(
@@ -246,8 +272,12 @@ jQuery(function () {
             })
         }).done(function handleCheckFilesResult(json) {
             var data = JSON.parse(json);
-            var filesWithoutErrors = filelist.filter(function (file) { return data[file.name] === '';});
-            filesThatExist = filelist.filter(function (file) { return data[file.name] === 'file exists';});
+            var filesWithoutErrors = filelist.filter(function (file) {
+                return data[file.name] === '';
+            });
+            filesThatExist = filelist.filter(function (file) {
+                return data[file.name] === 'file exists';
+            });
             var filesWithOtherErrors = filelist.filter(function (file) {
                 return data[file.name] && data[file.name] !== 'file exists';
             });
@@ -258,7 +288,7 @@ jQuery(function () {
             }
 
             if (filesWithOtherErrors.length) {
-                filesWithOtherErrors.map(function(file){
+                filesWithOtherErrors.map(function (file) {
                     var $errorMessage = jQuery('<div class="error"></div>');
                     $errorMessage.text(file.name + ': ' + data[file.name]);
                     jQuery('.content').prepend($errorMessage);
