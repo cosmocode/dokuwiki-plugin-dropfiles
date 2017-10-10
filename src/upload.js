@@ -16,7 +16,7 @@ jQuery(function () {
         xhr.upload.onprogress = function(ev) {
             if (ev.lengthComputable) {
                 var percentComplete = ev.loaded / ev.total;
-                $progressBar.val(percentComplete);
+                $progressBar.progressbar('option', {value: percentComplete});
             }
         };
         return xhr;
@@ -160,13 +160,15 @@ jQuery(function () {
         if (typeof overwrite === 'undefined') {
             overwrite = 0;
         }
-        $widget.show();
+        $widget.show().dialog({
+            width: 600
+        });
         filelist.forEach(function (file) {
             var fileName = file.newFileName || file.name;
 
             var $statusbar = jQuery('<div class="dropfiles_file_upload_bar"></div>');
             $statusbar.append(jQuery('<span class="filename">').text(fileName));
-            var $progressBar = jQuery('<progress>');
+            var $progressBar = jQuery('<div class="progressbar">').progressbar({max: 1});
             $statusbar.append($progressBar);
             $widget.append($statusbar);
 
@@ -201,7 +203,9 @@ jQuery(function () {
                                 showErrorDialog();
                             }
                         }
-                        // handle other errors
+                        var $errorMessage = jQuery('<div class="error"></div>');
+                        $errorMessage.text(fileName + ': ' + data.error);
+                        jQuery('.content').prepend($errorMessage);
                     }
                 )
                 .fail(
@@ -244,13 +248,21 @@ jQuery(function () {
             var data = JSON.parse(json);
             var filesWithoutErrors = filelist.filter(function (file) { return data[file.name] === '';});
             filesThatExist = filelist.filter(function (file) { return data[file.name] === 'file exists';});
-            // var filesWithOtherErrors = filelist.filter(function (file) {
-            //     return data[file.name] && data[file.name] !== 'file exists';
-            // });
+            var filesWithOtherErrors = filelist.filter(function (file) {
+                return data[file.name] && data[file.name] !== 'file exists';
+            });
 
             // show errors / pending files
             if (filesWithoutErrors.length) {
                 uploadFiles(filesWithoutErrors);
+            }
+
+            if (filesWithOtherErrors.length) {
+                filesWithOtherErrors.map(function(file){
+                    var $errorMessage = jQuery('<div class="error"></div>');
+                    $errorMessage.text(file.name + ': ' + data[file.name]);
+                    jQuery('.content').prepend($errorMessage);
+                });
             }
 
             // upload valid files
