@@ -10,10 +10,6 @@
   "author": "Michael Große <dokuwiki@cosmocode.de>",
   "license": "GPL-2.0",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.0.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
     "eslint": "^4.6.1",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-compat": "^1.0.4",
@@ -22,7 +18,6 @@
   "scripts": {
     "dev": "webpack -d",
     "watch": "webpack -dw",
-    "build": "webpack -p",
     "eslint": "NODE_ENV=production eslint src/"
   },
   "browserslist": [

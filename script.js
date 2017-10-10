@@ -1,1 +1,1 @@
-/* DOKUWIKI:include dist/bundle.js */
+/* DOKUWIKI:include src/upload.js */
