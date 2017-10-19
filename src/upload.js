@@ -90,7 +90,7 @@ jQuery(function () {
             $errorDialog.remove();
             showErrorDialog();
         });
-        $errorDialog.parent().find('.ui-dialog-buttonset').html($newInput);
+        $errorDialog.parent().find('.ui-dialog-buttonpane').html($newInput);
     }
 
     /**
