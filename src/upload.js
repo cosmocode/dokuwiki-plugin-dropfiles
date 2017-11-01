@@ -1,7 +1,8 @@
 jQuery(function () {
     'use strict';
     var $editarea = jQuery('#wiki__text');
-    if (!$editarea.length) {
+    var $filelisting = jQuery('.plugin__filelisting');
+    if (!$editarea.length && !$filelisting.length) {
         return;
     }
 
@@ -140,13 +141,13 @@ jQuery(function () {
     }
 
     /**
-     * Enable dragging for the provided elements. The drop event has to be implemented seperately.
+     * Enable drag'n'drop for the provided elements.
      *
      * @param {jQuery} $elements The Elements for which to enable drag and drop
      *
      * @return {void}
      */
-    function enableDragging($elements) {
+    function enableDragAndDrop($elements) {
         $elements.on('dragover', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -155,6 +156,18 @@ jQuery(function () {
         $elements.on('dragenter', function (e) {
             e.preventDefault();
             e.stopPropagation();
+        });
+
+        $elements.on('drop',function (e) {
+            if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var files = e.originalEvent.dataTransfer.files;
+            handleDroppedFiles(files, getNamespaceFromTarget(e.target));
         });
     }
 
@@ -167,7 +180,9 @@ jQuery(function () {
      */
     function handleDroppedFiles(files, namespace) {
         // todo Dateigrößen, Filetypes
-        var filelist = jQuery.makeArray(files);
+        var filelist = jQuery.makeArray(files).map(
+            function(file) {file.namespace = namespace; return file;}
+        );
         if (!filelist.length) {
             return;
         }
@@ -222,6 +237,9 @@ jQuery(function () {
      * @return {void}
      */
     function insertSyntax(fileid) {
+        if (!$editarea.length) {
+            return;
+        }
         var syntax = '{{' + fileid + '}}';
         var caretPos = $editarea[0].selectionStart;
         var prefix = $editarea.text().substring(0, caretPos);
@@ -262,7 +280,7 @@ jQuery(function () {
             form.append('qqfile', file, fileName);
             form.append('call', 'dropfiles_mediaupload');
             form.append('sectok', jQuery('input[name="sectok"]').val());
-            form.append('ns', window.JSINFO.namespace);
+            form.append('ns', file.namespace);
             form.append('ow', overwrite);
 
             var settings = {
@@ -317,28 +335,30 @@ jQuery(function () {
     }
 
     /**
+     * If the target is part of the filelisting plugin, return the namespace of the target-row, otherwise the current
+     *
+     * @param {Node} target The Node onto which the files were dropped
+     * @return {string} The namespace referenced by the target or the current namespace
+     */
+    function getNamespaceFromTarget(target) {
+        if (jQuery(target).closest('.plugin__filelisting').length) {
+            var $targetRow = jQuery(target).closest('tr');
+            return $targetRow.data('namespace') || $targetRow.data('childof') || window.JSINFO.namespace;
+        }
+        return window.JSINFO.namespace;
+    }
+
+    /**
      * Wrapper for initial bootstrapping
      *
      * @return {void}
      */
     function bootstrapFuntionality() {
-        enableDragging($editarea);
+        enableDragAndDrop($editarea);
+        enableDragAndDrop($filelisting);
         var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
         var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
         jQuery('body').append($widget);
-
-        $editarea.on('drop', function (e) {
-            if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
-                return;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            var files = e.originalEvent.dataTransfer.files;
-
-            handleDroppedFiles(files, window.JSINFO.namespace);
-        });
     }
     bootstrapFuntionality();
 });
