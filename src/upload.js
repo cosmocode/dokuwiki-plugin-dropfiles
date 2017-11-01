@@ -5,6 +5,10 @@ jQuery(function () {
         return;
     }
 
+    var filesThatExist = [];
+    var DW_AJAX_URL = window.DOKU_BASE + 'lib/exe/ajax.php';
+    var ERROR_DIALOG_ID = 'dropfiles_error_dialog';
+    var UPLOAD_PROGRESS_WIDGET_ID = 'plugin_dropfiles_uploadwidget';
 
     /**
      * Create a XMLHttpRequest that updates the value of the provided progressbar
@@ -17,15 +21,11 @@ jQuery(function () {
         xhr.upload.onprogress = function (ev) {
             if (ev.lengthComputable) {
                 var percentComplete = ev.loaded / ev.total;
-                $progressBar.progressbar('option', {value: percentComplete});
+                $progressBar.progressbar('option', { value: percentComplete });
             }
         };
         return xhr;
     }
-
-    var $errorDialog = null;
-    var filesThatExist = [];
-
 
     /**
      * Remove the first item from the stack of files
@@ -33,7 +33,7 @@ jQuery(function () {
      * @return {void}
      */
     function skipFile() {
-        $errorDialog.remove();
+        jQuery('#' + ERROR_DIALOG_ID).remove();
         filesThatExist.shift();
         if (filesThatExist.length) {
             showErrorDialog();
@@ -46,7 +46,7 @@ jQuery(function () {
      * @return {void}
      */
     function overwriteFile() {
-        $errorDialog.remove();
+        jQuery('#' + ERROR_DIALOG_ID).remove();
         uploadFiles([filesThatExist.shift()], true);
         if (filesThatExist.length) {
             showErrorDialog();
@@ -59,7 +59,7 @@ jQuery(function () {
      * @return {void}
      */
     function overwriteAll() {
-        $errorDialog.remove();
+        jQuery('#' + ERROR_DIALOG_ID).remove();
         uploadFiles(filesThatExist, true);
         filesThatExist = [];
     }
@@ -70,6 +70,7 @@ jQuery(function () {
      * @return {void}
      */
     function renameFile() {
+        var $errorDialog = jQuery('#' + ERROR_DIALOG_ID);
         var $newInput = jQuery('<form></form>');
         $newInput.append(jQuery('<input name="filename">').val(filesThatExist[0].name).css('margin-right', '0.4em'));
         $newInput.append(jQuery('<button name="rename" type="submit">' + window.LANG.plugins.dropfiles.rename + '</button>'));
@@ -105,7 +106,7 @@ jQuery(function () {
             text += ' ' + window.LANG.plugins.dropfiles['popup:originalName'].replace('%s', filesThatExist[0].name);
         }
         var errorTitle = window.LANG.plugins.dropfiles['title:fileExistsError'];
-        $errorDialog = jQuery('<div id="dropfiles_error_dialog" title="' + errorTitle + '"></div>').text(text).appendTo(jQuery('body'));
+        var $errorDialog = jQuery('<div id="' + ERROR_DIALOG_ID + '" title="' + errorTitle + '"></div>').text(text).appendTo(jQuery('body'));
         jQuery($errorDialog).dialog({
             width: 510,
             buttons: [
@@ -136,143 +137,35 @@ jQuery(function () {
             ]
         }).draggable();
         jQuery($errorDialog).dialog('widget').addClass('dropfiles');
-
     }
 
-    $editarea.on('dragover', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // todo: check if user is allowed to upload files here
-    });
-
-    $editarea.on('dragenter', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // todo: check if user is allowed to upload files here
-    });
-
-    $editarea.on('dragleave', function (/*e*/) {
-        // e.preventDefault();
-        // e.stopPropagation();
-    });
-
-
-    var sectok = $editarea.closest('form').find('input[name="sectok"]').val();
-    var DW_AJAX_URL = window.DOKU_BASE + 'lib/exe/ajax.php';
-    var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
-    var $widget = jQuery('<div title="' + widgetTitle + '" id="plugin_dropfiles_uploadwidget"></div>').hide();
-    jQuery('body').append($widget);
-
     /**
-     * Insert the syntax to the uploaded file into the page
+     * Enable dragging for the provided elements. The drop event has to be implemented seperately.
      *
-     * @param {string} fileid the id of the uploaded file as returned by DokuWiki
+     * @param {jQuery} $elements The Elements for which to enable drag and drop
      *
      * @return {void}
      */
-    function insertSyntax(fileid) {
-        var syntax = '{{' + fileid + '}}';
-        var caretPos = $editarea[0].selectionStart;
-        var prefix = $editarea.text().substring(0, caretPos);
-        var postfix = $editarea.text().substring(caretPos);
-        $editarea.text(prefix + syntax + postfix);
+    function enableDragging($elements) {
+        $elements.on('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        $elements.on('dragenter', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
     }
 
     /**
      *
-     * @param {File[]} filelist List of the files to be uploaded
-     * @param {boolean} [overwrite] should the files be overwritten at the server?
+     * @param {FileList} files The filelist from the event
+     * @param {string} namespace the namespace in which to upload the files
      *
      * @return {void}
      */
-    function uploadFiles(filelist, overwrite) {
-        if (typeof overwrite === 'undefined') {
-            // noinspection AssignmentToFunctionParameterJS
-            overwrite = 0;
-        }
-        $widget.show().dialog({
-            width: 600
-        });
-        jQuery($widget).dialog('widget').addClass('dropfiles');
-        filelist.forEach(function (file) {
-            var fileName = file.newFileName || file.name;
-
-            var $statusbar = jQuery('<div class="dropfiles_file_upload_bar"></div>');
-            $statusbar.append(jQuery('<span class="filename">').text(fileName));
-            var $progressBar = jQuery('<div class="progressbar">').progressbar({max: 1});
-            $statusbar.append($progressBar);
-            $widget.append($statusbar);
-            if (!$widget.dialog('isOpen')) {
-                $widget.dialog('open');
-            }
-
-            var form = new FormData();
-            form.append('qqfile', file, fileName);
-            form.append('call', 'dropfiles_mediaupload');
-            form.append('sectok', sectok);
-            form.append('ns', window.JSINFO.namespace);
-            form.append('ow', overwrite);
-
-            var settings = {
-                'type': 'POST',
-                'data': form,
-                'cache': false,
-                'processData': false,
-                'contentType': false,
-                'xhr': function () {
-                    return createXHRudateProgressBar($progressBar)
-                }
-            };
-
-            jQuery.ajax(DW_AJAX_URL, settings)
-                .done(
-                    function (data) {
-                        if (data.success) {
-                            $progressBar.find('.ui-progressbar-value').css('background-color', 'green');
-                            $statusbar.find('.filename').wrap(jQuery('<a>').attr({'href': data.link, 'target':'_blank'}));
-                            if (window.JSINFO.plugins.dropfiles.insertFileLink) {
-                                insertSyntax(data.id);
-                            }
-                            return;
-                        }
-                        if (data.errorType === 'file exists') {
-                            $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
-                            filesThatExist.push(file);
-                            if (filesThatExist.length === 1) {
-                                showErrorDialog();
-                            }
-                            var $fileExistsErrorMessage = jQuery('<div class="error"></div>');
-                            $fileExistsErrorMessage.text(fileName + ': ' + data.error);
-                            $fileExistsErrorMessage.insertAfter($statusbar);
-                            return;
-                        }
-                        $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
-                        var $errorMessage = jQuery('<div class="error"></div>');
-                        $errorMessage.text(fileName + ': ' + data.error);
-                        $errorMessage.insertAfter($statusbar);
-                    }
-                )
-                .fail(
-                    function (jqXHR, textStatus, errorThrown) {
-                        console.log('Class: , Function: fail-callback, Line 110 {jqXHR, textStatus, errorThrown}(): '
-                            , {jqXHR: jqXHR, textStatus: textStatus, errorThrown: errorThrown});
-                    }
-                );
-        });
-    }
-
-    $editarea.on('drop', function (e) {
-        if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
-            return;
-        }
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        var files = e.originalEvent.dataTransfer.files;
-
+    function handleDroppedFiles(files, namespace) {
         // todo Dateigrößen, Filetypes
         var filelist = jQuery.makeArray(files);
         if (!filelist.length) {
@@ -283,8 +176,8 @@ jQuery(function () {
         // check filenames etc.
         jQuery.post(DW_AJAX_URL, {
             call: 'dropfiles_checkfiles',
-            sectok: sectok,
-            ns: window.JSINFO.namespace,
+            sectok: jQuery('input[name="sectok"]').val(),
+            ns: namespace,
             filenames: filelist.map(function (file) {
                 return file.name;
             })
@@ -319,5 +212,133 @@ jQuery(function () {
             }
 
         });
-    });
+    }
+
+    /**
+     * Insert the syntax to the uploaded file into the page
+     *
+     * @param {string} fileid the id of the uploaded file as returned by DokuWiki
+     *
+     * @return {void}
+     */
+    function insertSyntax(fileid) {
+        var syntax = '{{' + fileid + '}}';
+        var caretPos = $editarea[0].selectionStart;
+        var prefix = $editarea.text().substring(0, caretPos);
+        var postfix = $editarea.text().substring(caretPos);
+        $editarea.text(prefix + syntax + postfix);
+    }
+
+    /**
+     *
+     * @param {File[]} filelist List of the files to be uploaded
+     * @param {boolean} [overwrite] should the files be overwritten at the server?
+     *
+     * @return {void}
+     */
+    function uploadFiles(filelist, overwrite) {
+        if (typeof overwrite === 'undefined') {
+            // noinspection AssignmentToFunctionParameterJS
+            overwrite = 0;
+        }
+        var $widget = jQuery('#' + UPLOAD_PROGRESS_WIDGET_ID);
+        $widget.show().dialog({
+            width: 600
+        });
+        $widget.dialog('widget').addClass('dropfiles');
+        filelist.forEach(function (file) {
+            var fileName = file.newFileName || file.name;
+
+            var $statusbar = jQuery('<div class="dropfiles_file_upload_bar"></div>');
+            $statusbar.append(jQuery('<span class="filename">').text(fileName));
+            var $progressBar = jQuery('<div class="progressbar">').progressbar({ max: 1 });
+            $statusbar.append($progressBar);
+            $widget.append($statusbar);
+            if (!$widget.dialog('isOpen')) {
+                $widget.dialog('open');
+            }
+
+            var form = new FormData();
+            form.append('qqfile', file, fileName);
+            form.append('call', 'dropfiles_mediaupload');
+            form.append('sectok', jQuery('input[name="sectok"]').val());
+            form.append('ns', window.JSINFO.namespace);
+            form.append('ow', overwrite);
+
+            var settings = {
+                'type': 'POST',
+                'data': form,
+                'cache': false,
+                'processData': false,
+                'contentType': false,
+                'xhr': function () {
+                    return createXHRudateProgressBar($progressBar)
+                }
+            };
+
+            jQuery.ajax(DW_AJAX_URL, settings)
+                .done(
+                    function (data) {
+                        if (data.success) {
+                            $progressBar.find('.ui-progressbar-value').css('background-color', 'green');
+                            $statusbar.find('.filename').wrap(jQuery('<a>').attr({
+                                'href': data.link,
+                                'target': '_blank'
+                            }));
+                            if (window.JSINFO.plugins.dropfiles.insertFileLink) {
+                                insertSyntax(data.id);
+                            }
+                            return;
+                        }
+                        if (data.errorType === 'file exists') {
+                            $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
+                            filesThatExist.push(file);
+                            if (filesThatExist.length === 1) {
+                                showErrorDialog();
+                            }
+                            var $fileExistsErrorMessage = jQuery('<div class="error"></div>');
+                            $fileExistsErrorMessage.text(fileName + ': ' + data.error);
+                            $fileExistsErrorMessage.insertAfter($statusbar);
+                            return;
+                        }
+                        $progressBar.find('.ui-progressbar-value').css('background-color', 'red');
+                        var $errorMessage = jQuery('<div class="error"></div>');
+                        $errorMessage.text(fileName + ': ' + data.error);
+                        $errorMessage.insertAfter($statusbar);
+                    }
+                )
+                .fail(
+                    function (jqXHR, textStatus, errorThrown) {
+                        console.log('Class: , Function: fail-callback, Line 110 {jqXHR, textStatus, errorThrown}(): '
+                            , { jqXHR: jqXHR, textStatus: textStatus, errorThrown: errorThrown });
+                    }
+                );
+        });
+    }
+
+    /**
+     * Wrapper for initial bootstrapping
+     *
+     * @return {void}
+     */
+    function bootstrapFuntionality() {
+        enableDragging($editarea);
+        var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
+        var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
+        jQuery('body').append($widget);
+
+        $editarea.on('drop', function (e) {
+            if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var files = e.originalEvent.dataTransfer.files;
+
+            handleDroppedFiles(files, window.JSINFO.namespace);
+        });
+    }
+    bootstrapFuntionality();
 });
