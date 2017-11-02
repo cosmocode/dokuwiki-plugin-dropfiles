@@ -306,6 +306,10 @@ jQuery(function () {
                             if (window.JSINFO.plugins.dropfiles.insertFileLink) {
                                 insertSyntax(data.id);
                             }
+                            if ($filelisting.length) {
+                                $filelisting.find('.plugin__filelisting_content')
+                                    .trigger('namespaceFilesChanged', file.namespace);
+                            }
                             return;
                         }
                         if (data.errorType === 'file exists') {
