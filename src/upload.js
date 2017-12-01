@@ -259,8 +259,17 @@ jQuery(function () {
         }
         var $widget = jQuery('#' + UPLOAD_PROGRESS_WIDGET_ID);
         $widget.show().dialog({
-            width: 600
+            width: 600,
+            close: function clearDoneEntries() {
+                var $uploadBars = $widget.find('.dropfiles_file_upload_bar');
+                var $uploadBarsDone = $uploadBars.filter(function(index, element) {
+                    return jQuery(element).find('.ui-progressbar-complete').length
+                });
+                $uploadBarsDone.remove();
+                $widget.find('.error').remove();
+            }
         });
+
         $widget.dialog('widget').addClass('dropfiles');
         filelist.forEach(function (file) {
             var fileName = file.newFileName || file.name;
