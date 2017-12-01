@@ -108,34 +108,32 @@ jQuery(function () {
         }
         var errorTitle = window.LANG.plugins.dropfiles['title:fileExistsError'];
         var $errorDialog = jQuery('<div id="' + ERROR_DIALOG_ID + '" title="' + errorTitle + '"></div>').text(text).appendTo(jQuery('body'));
-        jQuery($errorDialog).dialog({
-            width: 510,
-            buttons: [
-                {
-                    text: window.LANG.plugins.dropfiles.skip,
-                    click: function () {
-                        skipFile()
-                    }
-                },
-                {
-                    text: window.LANG.plugins.dropfiles.overwrite,
-                    click: function () {
-                        overwriteFile()
-                    }
-                },
+        var buttons = [
+            {
+                text: window.LANG.plugins.dropfiles.skip,
+                click: skipFile
+            },
+            {
+                text: window.LANG.plugins.dropfiles.rename,
+                click: renameFile
+            },
+            {
+                text: window.LANG.plugins.dropfiles.overwrite,
+                click: overwriteFile
+            }
+        ];
+
+        if (filesThatExist.length > 1) {
+            buttons.push(
                 {
                     text: window.LANG.plugins.dropfiles.overwriteAll,
-                    click: function () {
-                        overwriteAll()
-                    }
-                },
-                {
-                    text: window.LANG.plugins.dropfiles.rename,
-                    click: function () {
-                        renameFile()
-                    }
+                    click: overwriteAll
                 }
-            ]
+            );
+        }
+        jQuery($errorDialog).dialog({
+            width: 510,
+            buttons: buttons
         }).draggable();
         jQuery($errorDialog).dialog('widget').addClass('dropfiles');
     }
@@ -261,8 +259,17 @@ jQuery(function () {
         }
         var $widget = jQuery('#' + UPLOAD_PROGRESS_WIDGET_ID);
         $widget.show().dialog({
-            width: 600
+            width: 600,
+            close: function clearDoneEntries() {
+                var $uploadBars = $widget.find('.dropfiles_file_upload_bar');
+                var $uploadBarsDone = $uploadBars.filter(function(index, element) {
+                    return jQuery(element).find('.ui-progressbar-complete').length
+                });
+                $uploadBarsDone.remove();
+                $widget.find('.error').remove();
+            }
         });
+
         $widget.dialog('widget').addClass('dropfiles');
         filelist.forEach(function (file) {
             var fileName = file.newFileName || file.name;
