@@ -165,7 +165,7 @@ jQuery(function () {
             e.stopPropagation();
 
             var files = e.originalEvent.dataTransfer.files;
-            handleDroppedFiles(files, getNamespaceFromTarget(e.target));
+            handleDroppedFiles(files, getNamespaceFromTarget(e.target), this);
         });
     }
 
@@ -173,10 +173,11 @@ jQuery(function () {
      *
      * @param {FileList} files The filelist from the event
      * @param {string} namespace the namespace in which to upload the files
+     * @param {Node} elementOntoWhichItWasDropped Before this the error messeages will be inserted
      *
      * @return {void}
      */
-    function handleDroppedFiles(files, namespace) {
+    function handleDroppedFiles(files, namespace, elementOntoWhichItWasDropped) {
         // todo Dateigrößen, Filetypes
         var filelist = jQuery.makeArray(files).map(
             function(file) {file.namespace = namespace; return file;}
@@ -184,7 +185,6 @@ jQuery(function () {
         if (!filelist.length) {
             return;
         }
-
 
         // check filenames etc.
         jQuery.post(DW_AJAX_URL, {
@@ -215,7 +215,7 @@ jQuery(function () {
                 filesWithOtherErrors.map(function (file) {
                     var $errorMessage = jQuery('<div class="error"></div>');
                     $errorMessage.text(file.name + ': ' + data[file.name]);
-                    jQuery('.content').prepend($errorMessage);
+                    jQuery(elementOntoWhichItWasDropped).before($errorMessage);
                 });
             }
 
