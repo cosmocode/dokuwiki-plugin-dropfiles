@@ -243,6 +243,8 @@ jQuery(function () {
         var prefix = $editarea.text().substring(0, caretPos);
         var postfix = $editarea.text().substring(caretPos);
         $editarea.text(prefix + syntax + postfix);
+        var newCaretPos = caretPos+syntax.length;
+        $editarea[0].setSelectionRange(newCaretPos, newCaretPos);
     }
 
     /**
