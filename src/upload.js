@@ -1,5 +1,7 @@
 jQuery(function () {
     'use strict';
+
+    var $lastKnownCaretPosition = 0; // IE 11 fix
     var $editarea = jQuery('#wiki__text');
     var $filelisting = jQuery('.plugin__filelisting');
     if (!$editarea.length && !$filelisting.length) {
@@ -154,6 +156,12 @@ jQuery(function () {
         $elements.on('dragenter', function (e) {
             e.preventDefault();
             e.stopPropagation();
+
+            if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
+                // IE 11 fix
+                $editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
+            }
+
         });
 
         $elements.on('drop',function (e) {
@@ -245,6 +253,7 @@ jQuery(function () {
         $editarea.text(prefix + syntax + postfix);
         var newCaretPos = caretPos+syntax.length;
         $editarea[0].setSelectionRange(newCaretPos, newCaretPos);
+        $lastKnownCaretPosition = newCaretPos;  // IE 11 fix
     }
 
     /**
@@ -374,4 +383,10 @@ jQuery(function () {
         jQuery('body').append($widget);
     }
     bootstrapFuntionality();
+
+    $editarea.blur(function () {
+        // IE 11 fix
+        $lastKnownCaretPosition = $editarea[0].selectionStart;
+    });
+
 });
