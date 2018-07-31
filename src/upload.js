@@ -246,14 +246,32 @@ jQuery(function () {
         if (!$editarea.length) {
             return;
         }
-        var syntax = '{{' + fileid + '}}';
-        var caretPos = $editarea[0].selectionStart;
-        var prefix = $editarea.text().substring(0, caretPos);
-        var postfix = $editarea.text().substring(caretPos);
-        $editarea.text(prefix + syntax + postfix);
-        var newCaretPos = caretPos+syntax.length;
-        $editarea[0].setSelectionRange(newCaretPos, newCaretPos);
-        $lastKnownCaretPosition = newCaretPos;  // IE 11 fix
+        open = '{{' + fileid;
+        close = '}}';
+
+        var selection = DWgetSelection($editarea[0]);
+        var text = selection.getText();
+        var opts;
+
+        // don't include trailing space in selection
+        if(text.charAt(text.length - 1) == ' '){
+            selection.end--;
+            text = selection.getText();
+        }
+
+        if(text){
+            text = '|' + text;  // use text as image label
+        }
+        opts = { nosel: true };
+        text = open + text + close;
+        pasteText(selection,text,opts);
+
+
+
+
+
+
+
     }
 
     /**
