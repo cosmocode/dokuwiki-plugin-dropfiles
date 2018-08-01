@@ -246,8 +246,8 @@ jQuery(function () {
         if (!$editarea.length) {
             return;
         }
-        open = '{{' + fileid;
-        close = '}}';
+        var open = '{{' + fileid;
+        var close = '}}';
 
         var selection = DWgetSelection($editarea[0]);
         var text = selection.getText();
@@ -260,18 +260,11 @@ jQuery(function () {
         }
 
         if(text){
-            text = '|' + text;  // use text as image label
+            text = '|' + text;  // use text as label
         }
         opts = { nosel: true };
         text = open + text + close;
         pasteText(selection,text,opts);
-
-
-
-
-
-
-
     }
 
     /**
