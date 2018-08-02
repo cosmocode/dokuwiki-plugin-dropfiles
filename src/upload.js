@@ -104,7 +104,8 @@ jQuery(function () {
      */
     function showErrorDialog() {
         var fileName = filesThatExist[0].newFileName || filesThatExist[0].name;
-        var text = window.LANG.plugins.dropfiles['popup:fileExists'].replace('%s', fileName);
+        var renamedFileName = filesThatExist[0].renamedFileName;
+        var text = window.LANG.plugins.dropfiles['popup:fileExists'].replace('%s2', renamedFileName).replace('%s1', fileName);
         if (fileName !== filesThatExist[0].name) {
             text += ' ' + window.LANG.plugins.dropfiles['popup:originalName'].replace('%s', filesThatExist[0].name);
         }
@@ -205,13 +206,13 @@ jQuery(function () {
         }).done(function handleCheckFilesResult(json) {
             var data = JSON.parse(json);
             var filesWithoutErrors = filelist.filter(function (file) {
-                return data[file.name] === '';
+                return data[file.name].error === '';
             });
             filesThatExist = filelist.filter(function (file) {
-                return data[file.name] === 'file exists';
+                return data[file.name].error === 'file exists';
             });
             var filesWithOtherErrors = filelist.filter(function (file) {
-                return data[file.name] && data[file.name] !== 'file exists';
+                return data[file.name].error && data[file.name].error !== 'file exists';
             });
 
             // show errors / pending files
@@ -222,13 +223,16 @@ jQuery(function () {
             if (filesWithOtherErrors.length) {
                 filesWithOtherErrors.map(function (file) {
                     var $errorMessage = jQuery('<div class="error"></div>');
-                    $errorMessage.text(file.name + ': ' + data[file.name]);
+                    $errorMessage.text(file.name + ' (uploaded as ' + data[file.name].renamedFileName + ')' + ': ' + data[file.name].error);
                     jQuery(elementOntoWhichItWasDropped).before($errorMessage);
                 });
             }
 
             // upload valid files
             if (filesThatExist.length) {
+                filesThatExist.map(function (file) {
+                    file.renamedFileName = data[file.name].renamedFileName;
+                });
                 showErrorDialog();
             }
 
@@ -326,6 +330,7 @@ jQuery(function () {
             jQuery.ajax(DW_AJAX_URL, settings)
                 .done(
                     function (data) {
+                        file.renamedFileName = data.fileNameRenamed;
                         if (data.success) {
                             $progressBar.find('.ui-progressbar-value').css('background-color', 'green');
                             $statusbar.find('.filename').wrap(jQuery('<a>').attr({

@@ -14,7 +14,7 @@ if (!defined('DOKU_INC')) {
 class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
 {
 
-    protected $NS = '';
+    #protected $NS = '';
 
 
     /**
@@ -59,6 +59,39 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
         }
     }
 
+    
+    /**
+     * renames files according to configuration seeting
+     */
+    protected function renameFile($id)
+    {
+        global $INPUT;
+        $NS = $INPUT->str('ns');
+        $namespace = $this->getConf('namespace');
+        $basename = pathinfo(noNS($id), PATHINFO_BASENAME);
+        $namespace = str_replace(
+                        array(
+                             '@NS@',
+                             '@ID@',
+                             '@USER@',
+                             '@PAGE@',
+                        ),
+                        array(
+                             $NS,
+                             $INPUT->post->str('id'),
+                             $_SERVER['REMOTE_USER'],
+                             noNS($INPUT->post->str('id')),
+                        ),
+                        $namespace
+                    );
+        $namespace  = strftime($namespace);
+        if (substr($namespace, -1) != ':') {
+            $namespace .= ':';
+        }
+        return $namespace.$id;
+;
+    }
+
     /**
      * this is an adjusted version of @see ajax_mediaupload
      *
@@ -66,7 +99,7 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
      */
     protected function callMediaupload()
     {
-        global $NS, $MSG, $INPUT;
+        global $MSG, $INPUT;
 
         $id = '';
         if ($_FILES['qqfile']['tmp_name']) {
@@ -74,12 +107,11 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
         } elseif ($INPUT->get->has('qqfile')) {
             $id = $INPUT->get->str('qqfile');
         }
-
-        $id = cleanID($id);
-
-        $NS = $INPUT->str('ns');
-        $ns = $NS . ':' . getNS($id);
-
+        
+        $filename = $this->renameFile($id);
+        $ns = getNS($filename);
+        $id = cleanID($filename);
+        
         $AUTH = auth_quickaclcheck("$ns:*");
         if ($AUTH >= AUTH_UPLOAD) {
             io_createNamespace("$ns:xxx", 'media');
@@ -91,18 +123,18 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
 
         $res = false;
         if ($_FILES['qqfile']['tmp_name']) {
-            $res = media_upload($NS, $AUTH, $_FILES['qqfile']);
+            $res = media_upload($ns, $AUTH, $_FILES['qqfile']);
         }
         if ($INPUT->get->has('qqfile')) {
-            $res = media_upload_xhr($NS, $AUTH);
+            $res = media_upload_xhr($ns, $AUTH);
         }
 
         if ($res) {
             $result = array(
                 'success' => true,
-                'link' => media_managerURL(array('ns' => $ns, 'image' => $NS . ':' . $id), '&'),
-                'id' => $NS . ':' . $id,
-                'ns' => $NS,
+                'link' => media_managerURL(array('ns' => $ns, 'image' => $id), '&'),
+                'id' => $id,
+                'ns' => $ns,
             );
         } else {
             $error = '';
@@ -114,7 +146,8 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
             $result = array(
                 'error' => $error,
                 'errorType' => $this->determineErrorCause($id, $ns),
-                'ns' => $NS,
+                'fileNameRenamed' => $id,
+                'ns' => $ns,
             );
         }
         header('Content-Type: application/json');
@@ -127,7 +160,7 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
      */
     protected function checkFiles() {
         global $INPUT;
-        $this->NS = $INPUT->str('ns');
+        #$this->NS = $INPUT->str('ns');
 
         // loop over files
         $filelist = $INPUT->post->arr('filenames');
@@ -144,10 +177,12 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
      * @return array
      */
     protected function checkFileCallback($carry, $filename){
-        $id = cleanID($filename);
-        $ns = $this->NS . ':' . getNS($id);
+        $renamedFileName = $this->renameFile($filename);
+        
+        $id = cleanID($renamedFileName);
+        $ns = getNS($renamedFileName);
         $error = $this->determineErrorCause($id, $ns, false);
-        $carry[$filename] = $error;
+        $carry[$filename] = ['error' => $error, 'renamedFileName' => $renamedFileName];
         return $carry;
     }
 
@@ -174,8 +209,8 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
         if ($AUTH < AUTH_UPLOAD) {
             return 'missing permissions';
         }
-        $fullID = $ns . ':' . $id;
-        $fn = mediaFN($fullID);
+        #$fullID = $ns . ':' . $id;
+        $fn = mediaFN($id);
 
         // get filetype regexp
         $types = array_keys(getMimeTypes());
@@ -217,4 +252,3 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
     }
 }
 
-// vim:ts=4:sw=4:et:

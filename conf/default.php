@@ -6,3 +6,4 @@
  */
 
 $conf['insertFileLink']    = 0;
+$conf['namespace']    = '@NS@';
