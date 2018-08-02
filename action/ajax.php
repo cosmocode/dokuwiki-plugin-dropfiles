@@ -88,7 +88,7 @@ class action_plugin_dropfiles_ajax extends DokuWiki_Action_Plugin
         if (substr($namespace, -1) != ':') {
             $namespace .= ':';
         }
-        return $namespace.$id;
+        return $namespace.$basename;
 ;
     }
 
