@@ -2,12 +2,10 @@ jQuery(function () {
     'use strict';
 
     var $lastKnownCaretPosition = 0; // IE 11 fix
-    var $editarea = jQuery('#wiki__text');
-    var $filelisting = jQuery('.plugin__filelisting');
-    if (!$editarea.length && !$filelisting.length) {
-        return;
-    }
+    var $editarea;
+    var $filelisting;
 
+	var didInit = false;
     var filesThatExist = [];
     var DW_AJAX_URL = window.DOKU_BASE + 'lib/exe/ajax.php';
     var ERROR_DIALOG_ID = 'dropfiles_error_dialog';
@@ -140,6 +138,50 @@ jQuery(function () {
         jQuery($errorDialog).dialog('widget').addClass('dropfiles');
     }
 
+
+	/**
+     * Cancel an event.
+     *
+	 * @param {Event} e
+	 */
+	function cancelEvent(e) {
+		e.preventDefault();
+		e.stopPropagation();
+	}
+
+
+	/**
+	 * Handle drag enter.
+	 *
+	 * @param {Event} e
+	 */
+	function onDragEnter(e) {
+	    cancelEvent(e);
+
+		if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
+			// IE 11 fix
+			$editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
+		}
+	}
+
+
+	/**
+	 * Handle drop.
+	 *
+	 * @param {Event} e
+	 */
+	function onDrop(e) {
+		if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
+			return;
+		}
+
+		cancelEvent(e);
+
+		var files = e.originalEvent.dataTransfer.files;
+		handleDroppedFiles(files, getNamespaceFromTarget(e.target), this);
+	}
+
+
     /**
      * Enable drag'n'drop for the provided elements.
      *
@@ -148,33 +190,9 @@ jQuery(function () {
      * @return {void}
      */
     function enableDragAndDrop($elements) {
-        $elements.on('dragover', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        $elements.on('dragenter', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
-                // IE 11 fix
-                $editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
-            }
-
-        });
-
-        $elements.on('drop',function (e) {
-            if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
-                return;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            var files = e.originalEvent.dataTransfer.files;
-            handleDroppedFiles(files, getNamespaceFromTarget(e.target), this);
-        });
+        $elements.off('dragover', cancelEvent).on('dragover', cancelEvent);
+        $elements.off('dragenter', onDragEnter).on('dragenter', onDragEnter);
+        $elements.off('drop', onDrop).on('drop', onDrop);
     }
 
     /**
@@ -386,18 +404,49 @@ jQuery(function () {
      *
      * @return {void}
      */
-    function bootstrapFuntionality() {
-        enableDragAndDrop($editarea);
-        enableDragAndDrop($filelisting);
-        var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
-        var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
-        jQuery('body').append($widget);
-    }
-    bootstrapFuntionality();
+	function bootstrapFunctionality() {
+		enableDragAndDrop($editarea);
+		enableDragAndDrop($filelisting);
 
-    $editarea.blur(function () {
-        // IE 11 fix
-        $lastKnownCaretPosition = $editarea[0].selectionStart;
-    });
+		if (!didInit) {
+			var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
+			var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
+			jQuery('body').append($widget);
+		}
+		didInit = true;
+	}
 
+
+	/**
+     * Called when the edit area loses focus.
+	 */
+	function onEditBlur() {
+		// IE 11 fix
+		$lastKnownCaretPosition = $editarea[0].selectionStart;
+	}
+
+
+	/**
+     * Initialize (or reinitialize) the plugin.
+	 */
+	function init() {
+		$editarea = jQuery('#wiki__text');
+		$filelisting = jQuery('.plugin__filelisting');
+		$lastKnownCaretPosition = 0; // IE 11 fix
+
+		if ($editarea.length || $filelisting.length) {
+            bootstrapFunctionality();
+
+            $editarea.off('blur', onEditBlur).on('blur', onEditBlur);
+        }
+	}
+
+	init();
+
+	// fastwiki plugin support
+	jQuery(window).on('fastwiki:afterSwitch', function(evt, viewMode, isSectionEdit, prevViewMode) {
+		if (viewMode == 'edit' || isSectionEdit) {
+			init();
+		}
+	});
 });
