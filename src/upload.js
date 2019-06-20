@@ -5,7 +5,7 @@ jQuery(function () {
     var $editarea;
     var $filelisting;
 
-	var didInit = false;
+    var didInit = false;
     var filesThatExist = [];
     var DW_AJAX_URL = window.DOKU_BASE + 'lib/exe/ajax.php';
     var ERROR_DIALOG_ID = 'dropfiles_error_dialog';
@@ -139,47 +139,47 @@ jQuery(function () {
     }
 
 
-	/**
+    /**
      * Cancel an event.
      *
-	 * @param {Event} e
-	 */
-	function cancelEvent(e) {
-		e.preventDefault();
-		e.stopPropagation();
-	}
+     * @param {Event} e
+     */
+    function cancelEvent(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
 
-	/**
-	 * Handle drag enter.
-	 *
-	 * @param {Event} e
-	 */
-	function onDragEnter(e) {
-	    cancelEvent(e);
+    /**
+     * Handle drag enter.
+     *
+     * @param {Event} e
+     */
+    function onDragEnter(e) {
+        cancelEvent(e);
 
-		if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
-			// IE 11 fix
-			$editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
-		}
-	}
+        if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
+            // IE 11 fix
+            $editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
+        }
+    }
 
 
-	/**
-	 * Handle drop.
-	 *
-	 * @param {Event} e
-	 */
-	function onDrop(e) {
-		if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
-			return;
-		}
+    /**
+     * Handle drop.
+     *
+     * @param {Event} e
+     */
+    function onDrop(e) {
+        if (!e.originalEvent.dataTransfer || !e.originalEvent.dataTransfer.files.length) {
+            return;
+        }
 
-		cancelEvent(e);
+        cancelEvent(e);
 
-		var files = e.originalEvent.dataTransfer.files;
-		handleDroppedFiles(files, getNamespaceFromTarget(e.target), this);
-	}
+        var files = e.originalEvent.dataTransfer.files;
+        handleDroppedFiles(files, getNamespaceFromTarget(e.target), this);
+    }
 
 
     /**
@@ -404,49 +404,49 @@ jQuery(function () {
      *
      * @return {void}
      */
-	function bootstrapFunctionality() {
-		enableDragAndDrop($editarea);
-		enableDragAndDrop($filelisting);
+    function bootstrapFunctionality() {
+        enableDragAndDrop($editarea);
+        enableDragAndDrop($filelisting);
 
-		if (!didInit) {
-			var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
-			var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
-			jQuery('body').append($widget);
-		}
-		didInit = true;
-	}
+        if (!didInit) {
+            var widgetTitle = window.LANG.plugins.dropfiles['title:fileUpload'];
+            var $widget = jQuery('<div title="' + widgetTitle + '" id="' + UPLOAD_PROGRESS_WIDGET_ID + '"></div>').hide();
+            jQuery('body').append($widget);
+        }
+        didInit = true;
+    }
 
 
-	/**
+    /**
      * Called when the edit area loses focus.
-	 */
-	function onEditBlur() {
-		// IE 11 fix
-		$lastKnownCaretPosition = $editarea[0].selectionStart;
-	}
+     */
+    function onEditBlur() {
+        // IE 11 fix
+        $lastKnownCaretPosition = $editarea[0].selectionStart;
+    }
 
 
-	/**
+    /**
      * Initialize (or reinitialize) the plugin.
-	 */
-	function init() {
-		$editarea = jQuery('#wiki__text');
-		$filelisting = jQuery('.plugin__filelisting');
-		$lastKnownCaretPosition = 0; // IE 11 fix
+     */
+    function init() {
+        $editarea = jQuery('#wiki__text');
+        $filelisting = jQuery('.plugin__filelisting');
+        $lastKnownCaretPosition = 0; // IE 11 fix
 
-		if ($editarea.length || $filelisting.length) {
+        if ($editarea.length || $filelisting.length) {
             bootstrapFunctionality();
 
             $editarea.off('blur', onEditBlur).on('blur', onEditBlur);
         }
-	}
+    }
 
-	init();
+    init();
 
-	// fastwiki plugin support
-	jQuery(window).on('fastwiki:afterSwitch', function(evt, viewMode, isSectionEdit, prevViewMode) {
-		if (viewMode == 'edit' || isSectionEdit) {
-			init();
-		}
-	});
+    // fastwiki plugin support
+    jQuery(window).on('fastwiki:afterSwitch', function(evt, viewMode, isSectionEdit, prevViewMode) {
+        if (viewMode == 'edit' || isSectionEdit) {
+            init();
+        }
+    });
 });
