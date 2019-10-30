@@ -7,4 +7,4 @@
 
 
 $meta['insertFileLink'] = array('onoff');
-
+$meta['namespace'] = array('string');

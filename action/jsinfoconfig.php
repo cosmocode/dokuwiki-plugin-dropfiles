@@ -24,7 +24,7 @@ class action_plugin_dropfiles_jsinfoconfig extends DokuWiki_Action_Plugin
      */
     public function register(Doku_Event_Handler $controller)
     {
-        $controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'addDataToJSINFO');
+        $controller->register_hook('DOKUWIKI_STARTED', 'AFTER', $this, 'addDataToJSINFO');
     }
 
     /**
