@@ -392,9 +392,10 @@ jQuery(function () {
      * @return {string} The namespace referenced by the target or the current namespace
      */
     function getNamespaceFromTarget(target) {
-        if (jQuery(target).closest('.plugin__filelisting').length) {
+        var $filelisting = jQuery(target).closest('.plugin__filelisting');
+        if ($filelisting.length) {
             var $targetRow = jQuery(target).closest('tr');
-            return $targetRow.data('namespace') || $targetRow.data('childof') || window.JSINFO.namespace;
+            return $targetRow.data('namespace') || $targetRow.data('childof') || $filelisting.data('namespace') || window.JSINFO.namespace;
         }
         return window.JSINFO.namespace;
     }
