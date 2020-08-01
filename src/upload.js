@@ -158,6 +158,11 @@ jQuery(function () {
     function onDragEnter(e) {
         cancelEvent(e);
 
+        // only for $editarea, not $filelisting
+        if (!$editarea.length) {
+            return;
+        }
+
         if ($editarea[0].selectionStart !== $lastKnownCaretPosition) {
             // IE 11 fix
             $editarea[0].setSelectionRange($lastKnownCaretPosition, $lastKnownCaretPosition);
