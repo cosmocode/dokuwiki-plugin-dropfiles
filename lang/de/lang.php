@@ -1,6 +1,6 @@
 <?php
 /**
- * German language file for dropfiles plugin
+ * German language file for DropFiles Plugin
  *
  * @author Michael Große <dokuwiki@cosmocode.de>
  */
@@ -14,11 +14,7 @@ $lang['js']['overwrite'] = 'Überschreiben';
 $lang['js']['overwriteAll'] = 'Alle überschreiben';
 $lang['js']['rename'] = 'Umbenennen';
 $lang['js']['cancel'] = 'Abbrechen';
-$lang['js']['popup:fileExists'] = 'Die Datei %s existiert bereits.';
+$lang['js']['popup:fileExists'] = 'Die Datei %s existiert bereits';
 $lang['js']['popup:originalName'] = '(Urspünglicher Dateiname: %s)';
 $lang['js']['title:fileUpload'] = 'Datei upload';
 $lang['js']['title:fileExistsError'] = 'Fehler: Datei existiert bereits';
-
-
-
-//Setup VIM: ex: et ts=4 :
